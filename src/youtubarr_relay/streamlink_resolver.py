@@ -11,9 +11,9 @@ def normalize_source(source_ref: str) -> str:
     if source.startswith(("http://", "https://")):
         return source
     if source.startswith("UC"):
-        return f"https://www.youtube.com/channel/{source}"
+        return f"https://www.youtube.com/channel/{source}/live"
     handle = source if source.startswith("@") else f"@{source}"
-    return f"https://www.youtube.com/{handle}"
+    return f"https://www.youtube.com/{handle}/live"
 
 
 def build_command(source_ref: str, cookie_file: Path | None, quality: str = "best") -> list[str]:
