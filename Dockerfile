@@ -4,7 +4,7 @@ WORKDIR /app
 COPY pyproject.toml README.md LICENSE ./
 COPY src ./src
 RUN apt-get update -qq \
-    && apt-get install -y --no-install-recommends quickjs \
+    && apt-get install -y --no-install-recommends quickjs ffmpeg \
     && rm -rf /var/lib/apt/lists/* \
     && pip install --no-cache-dir . streamlink yt-dlp \
     && useradd --system --uid 10001 relay
