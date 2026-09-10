@@ -1,0 +1,18 @@
+services:
+  youtubarr-relay:
+    build: .
+    read_only: true
+    tmpfs:
+      - /tmp:mode=1777,size=64m
+    volumes:
+      - ./config/channels.json:/config/channels.json:ro
+      # Provide only when your authorized resolver needs it. Never commit this file.
+      # - /srv/youtubarr-secrets/cookies.txt:/run/secrets/cookies.txt:ro
+    environment:
+      YOUTUBARR_RELAY_CONFIG: /config/channels.json
+    networks:
+      - dispatcharr_internal
+
+networks:
+  dispatcharr_internal:
+    internal: true

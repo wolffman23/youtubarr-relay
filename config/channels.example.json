@@ -1,0 +1,12 @@
+{
+  "bind_host": "0.0.0.0",
+  "resolver_command": ["/usr/local/bin/authorized-resolver"],
+  "resolver_timeout_seconds": 15,
+  "channels": [
+    {
+      "key": "example-weather",
+      "title": "Example Weather",
+      "source_ref": "operator-configured-stable-source-id"
+    }
+  ]
+}

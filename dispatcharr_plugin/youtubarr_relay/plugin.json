@@ -1,0 +1,8 @@
+{
+  "name": "YouTubarr Relay",
+  "version": "0.1.0",
+  "description": "Read-only Dispatcharr integration for the YouTubarr Relay companion service",
+  "author": "Jeremy Wolff",
+  "license": "MIT",
+  "entry_point": "plugin.py"
+}
