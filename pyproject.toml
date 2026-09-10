@@ -18,6 +18,7 @@ dependencies = [
 
 [project.scripts]
 youtubarr-relay = "youtubarr_relay.main:main"
+youtubarr-streamlink-resolver = "youtubarr_relay.streamlink_resolver:main"
 
 [dependency-groups]
 dev = [

@@ -1,6 +1,7 @@
 {
   "bind_host": "0.0.0.0",
-  "resolver_command": ["/usr/local/bin/authorized-resolver"],
+  "resolver_command": ["youtubarr-streamlink-resolver"],
+  "cookie_file": "/run/secrets/cookies.txt",
   "resolver_timeout_seconds": 15,
   "channels": [
     {
