@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import os
 from collections.abc import AsyncIterator
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from youtubarr_relay.config import Channel, RelaySettings
 
@@ -16,6 +16,8 @@ class ResolverUnavailable(RuntimeError):
 class _Session:
     process: asyncio.subprocess.Process
     first_chunk: bytes
+    subscribers: set[asyncio.Queue[bytes | None]] = field(default_factory=set)
+    pump: asyncio.Task[None] | None = None
 
 
 class RelayManager:
@@ -41,7 +43,12 @@ class RelayManager:
             if session is None or session.process.returncode is not None:
                 session = await self._start(channel)
                 self._sessions[key] = session
-        return self._iterate(key, session)
+            queue: asyncio.Queue[bytes | None] = asyncio.Queue()
+            queue.put_nowait(session.first_chunk)
+            session.subscribers.add(queue)
+            if session.pump is None:
+                session.pump = asyncio.create_task(self._pump(key, session))
+        return self._iterate(key, session, queue)
 
     async def _start(self, channel: Channel) -> _Session:
         environment = os.environ.copy()
@@ -64,20 +71,27 @@ class RelayManager:
             raise ResolverUnavailable("upstream_unavailable")
         return _Session(process=process, first_chunk=first_chunk)
 
-    async def _iterate(self, key: str, session: _Session) -> AsyncIterator[bytes]:
+    async def _pump(self, key: str, session: _Session) -> None:
         try:
-            yield session.first_chunk
             assert session.process.stdout is not None
             while chunk := await session.process.stdout.read(64 * 1024):
-                yield chunk
+                for queue in tuple(session.subscribers):
+                    queue.put_nowait(chunk)
         finally:
+            for queue in tuple(session.subscribers):
+                queue.put_nowait(None)
             async with self._lock:
                 if self._sessions.get(key) is session:
                     self._sessions.pop(key, None)
-                    if session.process.returncode is None:
-                        session.process.terminate()
-                        try:
-                            await asyncio.wait_for(session.process.wait(), timeout=3)
-                        except TimeoutError:
-                            session.process.kill()
-                            await session.process.wait()
+
+    async def _iterate(
+        self, key: str, session: _Session, queue: asyncio.Queue[bytes | None]
+    ) -> AsyncIterator[bytes]:
+        try:
+            while (chunk := await queue.get()) is not None:
+                yield chunk
+        finally:
+            async with self._lock:
+                session.subscribers.discard(queue)
+                if not session.subscribers and session.process.returncode is None:
+                    session.process.terminate()
