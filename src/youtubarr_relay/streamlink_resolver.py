@@ -4,13 +4,24 @@ import os
 from pathlib import Path
 
 
-def build_command(source_ref: str, cookie_file: Path | None, quality: str = "best") -> list[str]:
-    if not source_ref.strip():
+def normalize_source(source_ref: str) -> str:
+    source = source_ref.strip()
+    if not source:
         raise ValueError("YOUTUBARR_SOURCE_REF is required")
+    if source.startswith(("http://", "https://")):
+        return source
+    if source.startswith("UC"):
+        return f"https://www.youtube.com/channel/{source}"
+    handle = source if source.startswith("@") else f"@{source}"
+    return f"https://www.youtube.com/{handle}"
+
+
+def build_command(source_ref: str, cookie_file: Path | None, quality: str = "best") -> list[str]:
+    source = normalize_source(source_ref)
     command = [os.environ.get("STREAMLINK_BIN", "streamlink"), "--stdout"]
     if cookie_file is not None:
         command.extend(["--http-cookies-file", str(cookie_file)])
-    command.extend([source_ref, quality])
+    command.extend([source, quality])
     return command
 
 
