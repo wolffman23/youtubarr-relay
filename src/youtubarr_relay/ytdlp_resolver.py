@@ -15,7 +15,7 @@ def main() -> None:
     with tempfile.TemporaryDirectory(prefix="youtubarr-ytdlp-") as temp_dir:
         resolve = [
             "yt-dlp", "--no-warnings", "--quiet", "--js-runtimes", "quickjs:/usr/bin/qjs",
-            "-f", "bestvideo", "-g", source,
+            "-f", "best", "-g", source,
         ]
         cookie = os.environ.get("YOUTUBARR_COOKIE_FILE")
         if cookie:
@@ -27,7 +27,11 @@ def main() -> None:
         if resolved.returncode or not manifest:
             raise SystemExit(1)
         ffmpeg = subprocess.Popen(
-            ["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", manifest[0], "-map", "0:v:0", "-c:v", "copy", "-f", "mpegts", "pipe:1"],
+            [
+                "ffmpeg", "-hide_banner", "-loglevel", "error", "-i", manifest[0],
+                "-map", "0:v:0", "-map", "0:a:0?", "-c:v", "copy", "-c:a", "copy",
+                "-f", "mpegts", "pipe:1",
+            ],
             stdout=sys.stdout.buffer,
             stderr=subprocess.DEVNULL,
         )
